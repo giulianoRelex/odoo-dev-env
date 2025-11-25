@@ -1,6 +1,6 @@
-# VitalCare Odoo Development Environment
+# Odoo Development Environment
 
-Este repositorio contiene el entorno de desarrollo para el proyecto VitalCare Odoo.
+Este repositorio contiene un entorno de desarrollo para proyectos Odoo.
 Se ha actualizado para ser totalmente contenerizado y configurable.
 
 ## 📋 Requisitos
@@ -12,9 +12,11 @@ Se ha actualizado para ser totalmente contenerizado y configurable.
 
 1. **Variables de Entorno**:
    Copia el archivo de ejemplo y ajústalo según tus necesidades:
+
    ```bash
    cp .env.example .env
    ```
+
    Edita `.env` para configurar puertos, contraseñas, versión de Odoo, etc.
 
 2. **Módulos Enterprise**:
@@ -25,12 +27,15 @@ Se ha actualizado para ser totalmente contenerizado y configurable.
 Utiliza el script `control.sh` para gestionar el entorno de manera sencilla.
 
 ### Menú Interactivo
+
 Ejecuta el script sin argumentos:
+
 ```bash
 ./control.sh
 ```
 
 ### Comandos Rápidos
+
 - **Iniciar**: `./control.sh start`
 - **Detener**: `./control.sh stop`
 - **Reiniciar Web**: `./control.sh restart`
@@ -41,7 +46,7 @@ Ejecuta el script sin argumentos:
 
 ## 📂 Estructura del Proyecto
 
-```
+```text
 .
 ├── addons/                  # Tus módulos personalizados
 ├── config/                  # Configuración de Odoo (odoo.conf)
@@ -59,4 +64,5 @@ Ejecuta el script sin argumentos:
 - **Cambios en XML**: Generalmente se aplican al actualizar el módulo (`./control.sh update_module` o desde la UI).
 
 ---
-**VitalCare Odoo Team**
+
+### Giuliano Hillebrand
