@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: ${DB_IMAGE}
@@ -12,10 +10,12 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - odoo-db-data:/var/lib/postgresql/data
+      - ./logs:/var/log/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       retries: 5
+    command: ["postgres", "-c", "logging_collector=on", "-c", "log_destination=stderr", "-c", "log_directory=/var/log/postgresql", "-c", "log_filename=postgresql.log", "-c", "log_file_mode=0644"]
 
   web:
     image: ${ODOO_IMAGE}
@@ -30,6 +30,7 @@ services:
       - ./config:/etc/odoo
       - ./addons:/mnt/extra-addons
       - ./enterprise-18.0:/mnt/enterprise-addons
+      - ./logs:/var/log/odoo
     environment:
       - HOST=${DB_HOST}
       - USER=${DB_USER}
@@ -39,6 +40,7 @@ services:
       --db-filter=${DB_FILTER} 
       --without-demo=${WITHOUT_DEMO}
       --load-language=${LOAD_LANGUAGE}
+      --init=${INIT_MODULES}
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8069/web/health || exit 1"]
       interval: 10s

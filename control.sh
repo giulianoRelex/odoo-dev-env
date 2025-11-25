@@ -78,9 +78,9 @@ function view_logs() {
     echo "3) Both"
     read -p "Option: " log_opt
     case $log_opt in
-        1) $DOCKER_COMPOSE logs -f web ;;
-        2) $DOCKER_COMPOSE logs -f db ;;
-        3) $DOCKER_COMPOSE logs -f ;;
+        1) tail -f logs/odoo.log ;;
+        2) tail -f logs/postgresql.log ;;
+        3) tail -f logs/odoo.log logs/postgresql.log ;;
         *) echo -e "${RED}Invalid option${NC}" ;;
     esac
 }

@@ -2,8 +2,8 @@ addons/
 __pycache__/
 *.pyc
 .env
-db_logs.txt
-odoo_logs.txt
+logs/*
+!logs/.keep
 *.log
 .vscode/
 keys.json
