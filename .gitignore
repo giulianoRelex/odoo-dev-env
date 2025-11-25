@@ -8,5 +8,3 @@ odoo_logs.txt
 .vscode/
 keys.json
 enterprise-18.0
-.web_log_pid
-.db_log_pid

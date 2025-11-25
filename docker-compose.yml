@@ -2,43 +2,47 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15
+    image: ${DB_IMAGE}
+    restart: unless-stopped
     environment:
-      - POSTGRES_USER=odoo
-      - POSTGRES_PASSWORD=odoo
-      - POSTGRES_DB=odoo_db
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     ports:
-      - "5433:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - odoo-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U odoo -d odoo_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       retries: 5
 
   web:
-    image: odoo:18
+    image: ${ODOO_IMAGE}
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     ports:
-      - "8080:8069"
+      - "${WEB_PORT}:8069"
     volumes:
       - odoo-web-data:/var/lib/odoo
       - ./config:/etc/odoo
       - ./addons:/mnt/extra-addons
       - ./enterprise-18.0:/mnt/enterprise-addons
     environment:
-      - HOST=db
-      - USER=odoo
-      - PASSWORD=odoo
+      - HOST=${DB_HOST}
+      - USER=${DB_USER}
+      - PASSWORD=${DB_PASSWORD}
     command: >
-      odoo --config=/etc/odoo/odoo.conf --db-filter=^odoo_db$$ --init=base,web,mail,attendance_webhook
+      odoo --config=/etc/odoo/odoo.conf 
+      --db-filter=${DB_FILTER} 
+      --without-demo=${WITHOUT_DEMO}
+      --load-language=${LOAD_LANGUAGE}
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/web/status || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8069/web/health || exit 1"]
       interval: 10s
-      retries: 5  
-
+      retries: 5
 
 volumes:
   odoo-web-data:
