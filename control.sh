@@ -109,10 +109,10 @@ function run_tests() {
     read -p "Enter module name to test (or 'all'): " module_name
     if [ "$module_name" == "all" ]; then
         echo -e "${YELLOW}Running all tests... (This might take a while)${NC}"
-        $DOCKER_COMPOSE exec web odoo --test-enable --stop-after-init -d ${DB_NAME}
+        $DOCKER_COMPOSE exec web odoo --test-enable --stop-after-init -d ${DB_NAME} --http-port=8070 --log-level=test
     else
         echo -e "${YELLOW}Running tests for module: $module_name${NC}"
-        $DOCKER_COMPOSE exec web odoo --test-enable --stop-after-init -d ${DB_NAME} -i $module_name
+        $DOCKER_COMPOSE exec web odoo --test-enable --stop-after-init -d ${DB_NAME} --test-tags=/$module_name --http-port=8070 --log-level=test
     fi
 }
 
