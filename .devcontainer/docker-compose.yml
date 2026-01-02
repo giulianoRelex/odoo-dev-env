@@ -1,0 +1,7 @@
+services:
+  web:
+    volumes:
+      - ..:/workspaces/odoo-dev-env:cached
+    # Overwrite the entrypoint to keep the container running if needed, 
+    # but Odoo's entrypoint is usually fine.
+    # command: sleep infinity

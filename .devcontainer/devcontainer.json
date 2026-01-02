@@ -1,0 +1,22 @@
+{
+  "name": "Odoo Development",
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.yml"],
+  "service": "web",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "robocorp.robotframework-lsp",
+        "odoo-ide.odoo-snippets",
+        "charles-millet.odoo-js-owl-snippets",
+        "trinidat.pylint-odoo",
+        "tamasfe.even-better-toml",
+        "charliermarsh.ruff"
+      ]
+    }
+  },
+  "remoteUser": "odoo",
+  "postCreateCommand": "pip3 install --user debugpy ruff pylint-odoo"
+}
