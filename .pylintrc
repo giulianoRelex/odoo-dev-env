@@ -1,0 +1,16 @@
+[MASTER]
+load-plugins=pylint_odoo
+
+[MESSAGES CONTROL]
+disable=
+    C0114, # missing-module-docstring
+    C0115, # missing-class-docstring
+    C0116, # missing-function-docstring
+    W0104, # pointless-statement (often used in Odoo for API calls)
+
+[ODOO]
+# Settings for pylint-odoo
+readme_template_url=https://github.com/OCA/odoo-community-it/blob/master/template/module/README.rst
+manifest_required_authors=True
+manifest_required_author=True
+manifest_deprecated_keys=description,active
