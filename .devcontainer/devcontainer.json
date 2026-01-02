@@ -1,3 +1,4 @@
+
 {
   "name": "Odoo Development",
   "dockerComposeFile": ["../docker-compose.yml", "docker-compose.yml"],
