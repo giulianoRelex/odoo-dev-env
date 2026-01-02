@@ -106,7 +106,11 @@ function reset_db() {
 }
 
 function run_tests() {
-    read -p "Enter module name to test (or 'all'): " module_name
+    local module_name=$1
+    if [ -z "$module_name" ]; then
+        read -p "Enter module name to test (or 'all'): " module_name
+    fi
+
     if [ "$module_name" == "all" ]; then
         echo -e "${YELLOW}Running all tests... (This might take a while)${NC}"
         $DOCKER_COMPOSE exec web odoo --test-enable --stop-after-init -d ${DB_NAME} --http-port=8070 --log-level=test
@@ -114,6 +118,16 @@ function run_tests() {
         echo -e "${YELLOW}Running tests for module: $module_name${NC}"
         $DOCKER_COMPOSE exec web odoo --test-enable --stop-after-init -d ${DB_NAME} --test-tags=/$module_name --http-port=8070 --log-level=test
     fi
+}
+
+function scaffold_module() {
+    local module_name=$1
+    if [ -z "$module_name" ]; then
+        read -p "Enter new module name: " module_name
+    fi
+    echo -e "${YELLOW}Scaffolding module: $module_name${NC}"
+    $DOCKER_COMPOSE exec web odoo scaffold $module_name /mnt/extra-addons
+    echo -e "${GREEN}Module $module_name created in addons/ directory.${NC}"
 }
 
 function update_module() {
@@ -137,8 +151,9 @@ function show_menu() {
     echo "5) Shell Access (Odoo Container)"
     echo "6) Update Module (-u)"
     echo "7) Run Tests"
-    echo "8) Reset Database (Clean Start)"
-    echo "9) Show Status"
+    echo "8) Scaffold New Module"
+    echo "9) Reset Database (Clean Start)"
+    echo "10) Show Status"
     echo "0) Exit"
     echo -e "${BLUE}------------------------------------------${NC}"
     read -p "Select an option: " option
@@ -151,8 +166,9 @@ function show_menu() {
         5) shell_access ;;
         6) update_module ;;
         7) run_tests ;;
-        8) reset_db ;;
-        9) show_status; read -p "Press Enter to continue..." ;;
+        8) scaffold_module ;;
+        9) reset_db ;;
+        10) show_status; read -p "Press Enter to continue..." ;;
         0) exit 0 ;;
         *) echo -e "${RED}Invalid option${NC}"; sleep 1 ;;
     esac
@@ -171,8 +187,13 @@ if [ $# -gt 0 ]; then
         logs) view_logs ;; # This might need non-interactive tweak if called directly
         shell) shell_access ;;
         status) show_status ;;
+        scaffold) scaffold_module "$2" ;;
+        test) run_tests "$2" ;;
         help) 
-            echo "Usage: $0 [start|stop|restart|logs|shell|status]"
+            echo "Usage: $0 [start|stop|restart|logs|shell|status|scaffold|test]"
+            echo "Examples:"
+            echo "  $0 scaffold my_module"
+            echo "  $0 test my_module"
             ;;
         *) echo "Unknown command: $1"; exit 1 ;;
     esac
