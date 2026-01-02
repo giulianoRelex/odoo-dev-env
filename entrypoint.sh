@@ -4,8 +4,15 @@ set -e
 # Wait for the database using the implicit wait or custom check if needed.
 # Since depends_on + service_healthy is used, we assume DB is up.
 
-CMD="odoo"
-ARGS=("--config=/etc/odoo/odoo.conf" "--db-filter=${DB_FILTER}")
+if [ "$DEBUGPY" = "True" ]; then
+    echo "Installing debugpy..."
+    pip install debugpy -t /tmp/debugpy --no-cache-dir
+    CMD="python3"
+    ARGS=("-m" "debugpy" "--listen" "0.0.0.0:5678" "/usr/bin/odoo" "--config=/etc/odoo/odoo.conf" "--db-filter=${DB_FILTER}")
+else
+    CMD="odoo"
+    ARGS=("--config=/etc/odoo/odoo.conf" "--db-filter=${DB_FILTER}")
+fi
 
 # Helper function to check if language exists
 check_language_exists() {
