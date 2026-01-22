@@ -8,3 +8,5 @@ logs/*
 .vscode/
 keys.json
 enterprise-18.0
+.gemini
+.claude

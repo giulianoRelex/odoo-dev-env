@@ -189,6 +189,20 @@ if [ $# -gt 0 ]; then
         status) show_status ;;
         scaffold) scaffold_module "$2" ;;
         test) run_tests "$2" ;;
+        update_module) 
+            if [ -z "$2" ]; then
+                echo "Error: Module name required."
+                exit 1
+            fi
+            # We need to adapt update_module function to accept arg or use a new one
+            # The existing update_module function is interactive.
+            # Let's create a non-interactive version or modify it.
+            # Actually, let's just run the command directly here for simplicity or refactor.
+            echo -e "${YELLOW}Updating module: $2${NC}"
+            $DOCKER_COMPOSE exec web odoo -u $2 -d ${DB_NAME:-odoo} --stop-after-init
+            echo -e "${GREEN}Update complete. Restarting web service...${NC}"
+            $DOCKER_COMPOSE restart web
+            ;;
         help) 
             echo "Usage: $0 [start|stop|restart|logs|shell|status|scaffold|test]"
             echo "Examples:"
