@@ -1,22 +1,15 @@
 {
-    "name": "My Module",
-    "version": "1.0",
+    "name": "__module_name__",
+    "version": "18.0.1.0.0",
     "category": "Uncategorized",
-    "summary": "Short summary of the module",
-    "description": """
-Long description of the module
-    """,
+    "summary": "Short summary of __module_name__",
     "author": "Your Company",
     "website": "https://www.yourcompany.com",
     "license": "LGPL-3",
     "depends": ["base"],
     "data": [
         "security/ir.model.access.csv",
-        "views/views.xml",
-        "views/templates.xml",
-    ],
-    "demo": [
-        "demo/demo.xml",
+        "views/__module_name___views.xml",
     ],
     "installable": True,
     "application": False,
