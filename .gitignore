@@ -1,12 +1,44 @@
-addons/
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+
+# Environment
 .env
+
+# Odoo addons and enterprise (runtime, not part of boilerplate)
+addons/
+enterprise/
+
+# Generated config
+config/odoo.conf
+
+# Logs
 logs/*
 !logs/.keep
 *.log
+
+# Database snapshots
+snapshots/*
+!snapshots/.keep
+
+# Auto-generated context
+PROJECT_CONTEXT.md
+
+# IDE
 .vscode/
+.idea/
+
+# Secrets
 keys.json
-enterprise-18.0
+
+# AI assistants (user-specific)
 .gemini
 .claude
+
+# Node
+node_modules/

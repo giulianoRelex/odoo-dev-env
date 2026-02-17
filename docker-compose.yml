@@ -38,13 +38,13 @@ services:
         condition: service_healthy
     ports:
       - "${WEB_PORT}:8069"
-      - "5678:5678"
+      - "${DEBUGPY_PORT:-5678}:5678"
     volumes:
       - odoo-web-data:/var/lib/odoo
       - ./config:/etc/odoo
       - ./entrypoint.sh:/entrypoint.sh
       - ./addons:/mnt/extra-addons
-      - ./enterprise-18.0:/mnt/enterprise-addons
+      - ./enterprise:/mnt/enterprise-addons
       - ./logs:/var/log/odoo
     environment:
       - HOST=${DB_HOST}

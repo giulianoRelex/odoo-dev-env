@@ -5,8 +5,11 @@ set -e
 # Since depends_on + service_healthy is used, we assume DB is up.
 
 if [ "$DEBUGPY" = "True" ]; then
-    echo "Installing debugpy..."
-    pip install debugpy -t /tmp/debugpy --no-cache-dir
+    if ! python3 -c "import debugpy" 2>/dev/null; then
+        echo "Installing debugpy..."
+        pip install debugpy -t /tmp/debugpy --no-cache-dir
+    fi
+    export PYTHONPATH="/tmp/debugpy:${PYTHONPATH:-}"
     CMD="python3"
     ARGS=("-m" "debugpy" "--listen" "0.0.0.0:5678" "/usr/bin/odoo" "--config=/etc/odoo/odoo.conf" "--db-filter=${DB_FILTER}")
 else
