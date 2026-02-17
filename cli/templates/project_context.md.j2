@@ -9,23 +9,34 @@
 - **Database**: {{ db_name | default('N/A') }}
 - **Custom Modules**: {{ modules | length }}
 
-## Modules
+{% if modules %}
+## Module Summary
+
+| Module | Summary | Models | Views | Tests | Controllers | Reports | Wizards | Version |
+|--------|---------|--------|-------|-------|-------------|---------|---------|---------|
+{% for mod in modules %}
+| `{{ mod.technical_name }}` | {{ mod.summary | default('—') }} | {{ mod.model_count }} | {{ mod.view_count }} | {{ mod.test_count }} | {{ 'yes' if mod.has_controllers else 'no' }} | {{ mod.report_count }} | {{ mod.wizard_count }} | {{ mod.version | default('—') }} |
+{% endfor %}
+
+## Module Details
 
 {% for mod in modules %}
-### {{ mod.name }}
+### {{ mod.name }} (`{{ mod.technical_name }}`)
 
 - **Summary**: {{ mod.summary | default('No summary') }}
 - **Version**: {{ mod.version | default('N/A') }}
 - **Depends**: {{ mod.depends | join(', ') if mod.depends else 'base' }}
+- **Components**: {{ mod.model_count }} model(s), {{ mod.view_count }} view(s), {{ mod.test_count }} test(s), {{ mod.report_count }} report(s), {{ mod.wizard_count }} wizard(s){% if mod.has_controllers %}, has controllers{% endif %}
+
 {% if mod.models %}
-- **Models**:
+**Models**:
 {% for model in mod.models %}
-  - `{{ model.name }}`{% if model.inherit %} (inherits: {{ model.inherit }}){% endif %}{% if model.fields %} — {{ model.fields | join(', ') }}{% endif %}
+- `{{ model.name }}`{% if model.inherit %} (inherits: `{{ model.inherit }}`){% endif %}{% if model.fields %} — {{ model.fields | join(', ') }}{% endif %}
 
 {% endfor %}
 {% endif %}
 {% endfor %}
-{% if modules %}
+
 ## Dependency Graph
 
 {% for mod in modules %}
@@ -33,4 +44,14 @@
 {{ mod.technical_name }} -> {{ mod.depends | join(', ') }}
 {% endif %}
 {% endfor %}
+
+## Architectural Notes
+
+<!-- Add manual notes here. This section is not overwritten by odoodev context. -->
+<!-- Example: "All customer-facing models inherit res.partner via delegation." -->
+
+{% else %}
+## Modules
+
+No custom modules found in `addons/`. Run `odoodev scaffold <name>` to create one.
 {% endif %}

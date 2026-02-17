@@ -49,6 +49,12 @@ def _scan_modules(addons_dir: Path) -> list[dict]:
 
         module_info["technical_name"] = module_dir.name
         module_info["models"] = _scan_models(module_dir / "models")
+        module_info["model_count"] = len(module_info["models"])
+        module_info["view_count"] = _count_xml_views(module_dir)
+        module_info["test_count"] = _count_tests(module_dir)
+        module_info["has_controllers"] = _has_controllers(module_dir)
+        module_info["report_count"] = _count_xml_reports(module_dir)
+        module_info["wizard_count"] = _count_wizards(module_dir)
         modules.append(module_info)
 
     return modules
@@ -134,3 +140,83 @@ def _get_field_type(call_node: ast.Call) -> str | None:
         if func.value.id == "fields":
             return func.attr
     return None
+
+
+def _count_xml_views(module_dir: Path) -> int:
+    """Count ir.ui.view records in views/*.xml files."""
+    count = 0
+    views_dir = module_dir / "views"
+    if not views_dir.exists():
+        return 0
+    for xml_file in views_dir.glob("*.xml"):
+        try:
+            content = xml_file.read_text()
+            count += content.count('model="ir.ui.view"')
+        except OSError:
+            continue
+    return count
+
+
+def _count_xml_reports(module_dir: Path) -> int:
+    """Count ir.actions.report records in all *.xml files of the module."""
+    count = 0
+    for xml_file in module_dir.rglob("*.xml"):
+        try:
+            content = xml_file.read_text()
+            count += content.count('model="ir.actions.report"')
+        except OSError:
+            continue
+    return count
+
+
+def _count_tests(module_dir: Path) -> int:
+    """Count test methods (def test_*) in tests/*.py files."""
+    count = 0
+    tests_dir = module_dir / "tests"
+    if not tests_dir.exists():
+        return 0
+    for py_file in tests_dir.glob("*.py"):
+        if py_file.name == "__init__.py":
+            continue
+        try:
+            tree = ast.parse(py_file.read_text())
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
+                count += 1
+    return count
+
+
+def _has_controllers(module_dir: Path) -> bool:
+    """Return True if controllers/ has any .py files besides __init__.py."""
+    controllers_dir = module_dir / "controllers"
+    if not controllers_dir.exists():
+        return False
+    return any(
+        f for f in controllers_dir.glob("*.py") if f.name != "__init__.py"
+    )
+
+
+def _count_wizards(module_dir: Path) -> int:
+    """Count TransientModel classes in wizards/ or wizard/ directories."""
+    count = 0
+    for wizard_dir_name in ("wizards", "wizard"):
+        wizard_dir = module_dir / wizard_dir_name
+        if not wizard_dir.exists():
+            continue
+        for py_file in wizard_dir.glob("*.py"):
+            if py_file.name == "__init__.py":
+                continue
+            try:
+                tree = ast.parse(py_file.read_text())
+            except SyntaxError:
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ClassDef):
+                    for base in node.bases:
+                        if isinstance(base, ast.Attribute) and base.attr == "TransientModel":
+                            count += 1
+                        elif isinstance(base, ast.Name) and base.id == "TransientModel":
+                            count += 1
+    return count

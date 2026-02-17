@@ -116,3 +116,129 @@ odoodev test my_module           # Run module tests
 ```
 
 After modifying a module's Python models or data files, run `odoodev update <name>` to apply changes. XML/JS changes are picked up automatically via dev mode hot-reload.
+
+## MCP Tools
+
+Five MCP servers are configured in `.mcp.json` (gitignored — copy from `.mcp.json.example`):
+
+| Server | Package | Capability |
+|---|---|---|
+| `postgres` | `@modelcontextprotocol/server-postgres` | Query the live Odoo DB directly |
+| `filesystem` | `@modelcontextprotocol/server-filesystem` | Read/write project files |
+| `fetch` | `@modelcontextprotocol/server-fetch` | Fetch Odoo docs and web pages |
+| `context7` | `@upstash/context7-mcp@latest` | Up-to-date library docs (Odoo, Python, JS) |
+| `memory` | `@modelcontextprotocol/server-memory` | Persistent cross-session memory |
+
+### Setup
+
+```bash
+cp .mcp.json.example .mcp.json
+# Edit .mcp.json: replace DB credentials and /absolute/path/to/project
+# Then restart Claude Code — run /mcp to verify all 5 servers are connected
+```
+
+The `postgres` server requires the DB container to be running (`odoodev up`).
+Memory is stored in `.claude/memory.json` (gitignored via `.claude/`).
+
+### Useful postgres MCP queries
+
+```sql
+-- List all custom tables
+SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename;
+
+-- Inspect a model's columns
+SELECT column_name, data_type FROM information_schema.columns
+WHERE table_name = 'my_model' ORDER BY ordinal_position;
+
+-- Check installed modules
+SELECT name, state FROM ir_module_module WHERE state = 'installed' ORDER BY name;
+
+-- Recent log entries
+SELECT create_date, type, name, res_id FROM mail_message ORDER BY create_date DESC LIMIT 20;
+```
+
+### Memory MCP usage
+
+Use the memory server to persist context across sessions:
+
+```
+# Save important project decisions
+remember: "We use res.partner inheritance for customer extensions, not a separate model"
+
+# Recall at start of new session
+recall project decisions
+```
+
+## AI Agent Workflow
+
+### Session start checklist
+
+Run these two commands at the start of every AI session to load fresh context:
+
+```bash
+odoodev context    # Regenerates PROJECT_CONTEXT.md from addons/
+odoodev status     # Shows which containers are running
+```
+
+Then share `PROJECT_CONTEXT.md` with Claude Code: `cat PROJECT_CONTEXT.md`.
+
+### Structured prompts for common tasks
+
+**Adding a field to an existing model:**
+```
+Context: [paste PROJECT_CONTEXT.md section for the module]
+Task: Add a `delivery_notes` (Text) field to `sale.order` in module `my_sale_ext`.
+Constraints: Odoo 18, follow existing code style, add the field to the form view.
+```
+
+**Creating a new model from scratch:**
+```
+Context: [paste PROJECT_CONTEXT.md]
+Task: Create model `my.shipment` in module `my_logistics` with fields: name (Char, required),
+      partner_id (Many2one res.partner), state (Selection: draft/confirmed/done).
+      Include form + list views, ACLs for group_user, and a basic test.
+```
+
+**Debugging an error:**
+```
+Error: [paste full traceback]
+Context: [paste relevant model/view code]
+Check ERRORS.md first. Then diagnose root cause and propose minimal fix.
+```
+
+**Writing tests:**
+```
+Context: [paste model code]
+Task: Write TransactionCase tests for `my.model` covering: create, write, unlink,
+      and the `action_confirm` method. Use realistic test data.
+```
+
+### Odoo 18 anti-patterns to avoid
+
+1. **`attrs` / `states` in views** — use `invisible=`, `readonly=`, `required=` directly
+2. **`@api.multi`** — removed; all methods operate on recordsets by default
+3. **`@api.one`** — removed; iterate explicitly if needed
+4. **`fields.Date.today()` as default** — use `fields.Date.context_today` or `default=fields.Date.today`
+5. **`self.pool`** — use `self.env` instead
+6. **`cr.execute` for ORM operations** — use ORM methods; raw SQL only for performance-critical bulk ops
+7. **`_columns` dict** — use class-level field declarations
+8. **`request.website` in non-website modules** — check `has_group` or use `ir.http`
+9. **Hardcoded user IDs** — use `self.env.ref('base.user_admin')` or `self.env.user`
+10. **Missing `depends` on computed fields** — always declare `@api.depends`; missing deps cause stale cache
+
+### ERRORS.md workflow
+
+When you encounter a new error:
+1. Check `ERRORS.md` for an existing solution.
+2. If not found, solve it, then add a new `ERR-NNN` entry with symptom, cause, and solution.
+3. Commit `ERRORS.md` so the fix is available in future sessions.
+
+## Refreshing AI Context
+
+Run `odoodev context` whenever:
+- A new module is added or scaffolded
+- Models or fields change significantly
+- Starting a new Claude Code session on this project
+
+The generated `PROJECT_CONTEXT.md` (gitignored) gives Claude a compact map of all custom modules,
+their models, fields, view counts, and dependencies — without requiring access to every source file.

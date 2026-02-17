@@ -35,6 +35,7 @@ PROJECT_CONTEXT.md
 
 # Secrets
 keys.json
+.mcp.json
 
 # AI assistants (user-specific)
 .gemini
