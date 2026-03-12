@@ -46,9 +46,19 @@ except Exception as e:
 "
 }
 
-# Add WITHOUT_DEMO if set
-if [ -n "$WITHOUT_DEMO" ]; then
-    ARGS+=("--without-demo=${WITHOUT_DEMO}")
+# Install Python dependencies from addons requirements.txt (like Odoo.sh does)
+ADDONS_DIRS="/mnt/extra-addons /mnt/enterprise-addons"
+REQ_FILES=$(find $ADDONS_DIRS -maxdepth 3 -name 'requirements.txt' -not -empty 2>/dev/null)
+if [ -n "$REQ_FILES" ]; then
+    echo "Installing Python dependencies from addons requirements.txt files..."
+    for req in $REQ_FILES; do
+        pip install --break-system-packages --quiet -r "$req" 2>/dev/null || true
+    done
+fi
+
+# Add WITHOUT_DEMO if set (v19: boolean flag, no value)
+if [ -n "$WITHOUT_DEMO" ] && [ "$WITHOUT_DEMO" != "False" ]; then
+    ARGS+=("--without-demo")
 fi
 
 # Init modules handling
@@ -79,5 +89,9 @@ fi
 # Always add dev mode for hot reloading in this dev environment
 ARGS+=("--dev=reload,xml")
 
+LOG_FILE="/var/log/odoo/odoo.log"
 echo "Starting Odoo with command: $CMD ${ARGS[*]}"
-exec $CMD "${ARGS[@]}"
+
+# Run Odoo and duplicate output to log file while keeping stderr for Docker logs.
+# Use exec to replace shell, with process substitution to tee into the log file.
+exec $CMD "${ARGS[@]}" > >(tee -a "$LOG_FILE") 2>&1
