@@ -1,6 +1,6 @@
 import typer
 
-from cli.commands import context, db, down, init, load_backup, logs, reset_db, restart, scaffold, shell, status, test, tui, up, update
+from cli.commands import context, db, down, init, install, load_backup, logs, reset_db, restart, scaffold, shell, status, test, tui, up, update
 
 app = typer.Typer(
     name="odoodev",
@@ -17,6 +17,7 @@ app.command()(logs.logs)
 app.command()(shell.shell)
 app.command()(test.test)
 app.command()(scaffold.scaffold)
+app.command("addon-install")(install.install)
 app.command()(update.update)
 app.command("reset-db")(reset_db.reset_db)
 app.command("load-backup")(load_backup.load_backup)
