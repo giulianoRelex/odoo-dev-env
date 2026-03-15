@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Generic, reusable Dockerized Odoo development environment boilerplate. Three services run via Docker Compose: Odoo web (`web`), PostgreSQL (`db`), and pgweb (`pgweb` — a DB browser UI).
+Generic, reusable Dockerized Odoo development environment boilerplate. Requires Python 3.10+ and Docker Compose v2. Three services run via Docker Compose: Odoo web (`web`), PostgreSQL (`db`), and pgweb (`pgweb` — a DB browser UI). Services have health checks: `db` uses `pg_isready`, `web` hits `/web/health`.
 
 Custom modules go in `addons/` (mounted at `/mnt/extra-addons`). Enterprise modules go in `enterprise/` (mounted at `/mnt/enterprise-addons`). Both directories are gitignored and created at runtime.
 
@@ -29,6 +29,7 @@ odoodev reset-db                 # Destroy DB + volumes, fresh start
 # Development
 odoodev shell                    # Bash shell inside the Odoo container
 odoodev scaffold <name>          # Create new module from template in addons/
+odoodev addon-install <module>   # Install a single module and restart
 odoodev update <module>          # odoo -u <module> then restart web
 odoodev logs [web|db|all]        # Follow service logs
 
@@ -106,6 +107,9 @@ pyproject.toml                  # CLI packaging + ruff/pylint tool config
 - **Docker Compose watch mode**: `odoodev up --watch` enables file syncing — changes in `./addons` are automatically synced to `/mnt/extra-addons` in the container.
 - **Language check**: The entrypoint uses psycopg2 to check if a language is already loaded in the DB before attempting to install it, avoiding redundant loads.
 - **Module scaffolding**: The `scaffold` command copies `templates/module_template/` and replaces the `__module_name__` placeholder in both filenames and file contents.
+- **Log duplication**: Odoo output is tee'd to `/var/log/odoo/odoo.log` (mapped to `logs/` on the host) in addition to stdout.
+- **Debugpy**: When `DEBUGPY=True`, the entrypoint installs debugpy and launches Odoo under `python -m debugpy --listen 0.0.0.0:5678`. Attach VS Code's debugger to `localhost:${DEBUGPY_PORT}`.
+- **DB operations**: `db restore` and `load-backup` stop the web service during the operation, then restart it. Snapshots use pg custom format (`--format=custom`), restores skip ownership (`--no-owner --no-acl`).
 
 ### Key Environment Variables (.env)
 
@@ -137,11 +141,21 @@ odoodev update my_module         # Apply Python/data changes
 odoodev test my_module           # Run module tests
 ```
 
-After modifying a module's Python models or data files, run `odoodev update <name>` to apply changes. XML/JS changes are picked up automatically via dev mode hot-reload.
+**When to restart vs hot-reload:**
+- **Automatic** (dev mode): XML view changes, QWeb templates, JS/CSS assets
+- **Requires `odoodev update <name>`**: Python model changes (new fields, method changes), security CSV, data XML files
+- **Requires `odoodev reset-db`**: Removing fields/models, major structural changes
 
 ### Odoo Development Knowledge
 
-For Odoo API patterns, anti-patterns, and best practices, use the `/odoo-19.0` skill plugin. It covers 18 specialized guides: Actions, Controllers, Data files, API Decorators, SQL Constraints, Database Indexes, Module development, Field types, Manifest configuration, Mixins, ORM methods, Migration scripts, OWL components, Performance optimization, QWeb Reports, Security/ACL, Testing, and Translations.
+**IMPORTANT: Always consult the `/odoo-19.0` skill plugin BEFORE starting any technical implementation** — especially for OWL components, controller routes, view XML, security rules, and any Odoo API usage. Odoo 19 has breaking changes from prior versions (renamed fields, deprecated APIs, removed features) that the plugin's 18 specialized guides cover: Actions, Controllers, Data files, API Decorators, SQL Constraints, Database Indexes, Module development, Field types, Manifest configuration, Mixins, ORM methods, Migration scripts, OWL components, Performance optimization, QWeb Reports, Security/ACL, Testing, and Translations.
+
+Key Odoo 19 gotchas caught by the plugin:
+- `groups_id` → `group_ids` on `res.users`
+- `read_group()` → `_read_group()` with new signature
+- `mobile` field removed from `res.partner`
+- `<group>` tag not allowed in search views
+- OWL `mount()` lacks template registry in portal/frontend — use vanilla JS instead
 
 ## MCP Tools
 
