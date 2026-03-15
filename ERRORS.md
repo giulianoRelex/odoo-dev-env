@@ -158,3 +158,22 @@ db_name = odoo_db
 
 If running tests outside Docker (unusual), set `DB_HOST=localhost` and ensure PostgreSQL is
 reachable on `DB_PORT`.
+
+---
+
+## ERR-009: `'res.company' object has no attribute 'tz'` in Odoo 19
+
+**Symptom**: `AttributeError: 'res.company' object has no attribute 'tz'` when calling
+`request.env.company.sudo().tz`.
+
+**Cause**: In Odoo 19, the `tz` (timezone) field is on `res.partner`, not `res.company`.
+The company's timezone is accessed through its linked partner record.
+
+**Solution**:
+```python
+# OLD (broken in Odoo 19)
+company_tz = request.env.company.sudo().tz or "UTC"
+
+# NEW (correct in Odoo 19)
+company_tz = request.env.company.sudo().partner_id.tz or "UTC"
+```
