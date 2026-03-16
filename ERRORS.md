@@ -177,3 +177,22 @@ company_tz = request.env.company.sudo().tz or "UTC"
 # NEW (correct in Odoo 19)
 company_tz = request.env.company.sudo().partner_id.tz or "UTC"
 ```
+
+---
+
+## ERR-010: `ValueError: Wrong value for calendar.attendee.state: 'draft'`
+
+**Symptom**: Confirming a dental appointment raises `ValueError: Wrong value for
+calendar.attendee.state: 'draft'` when attendees are added.
+
+**Cause**: The dental appointment model overrides the `state` field on `calendar.event` with
+custom values including `'draft'`. When the form view action or context has `default_state='draft'`,
+that context key bleeds into `calendar.attendee` creation. The `calendar.attendee.state` field only
+accepts `needsAction`, `tentative`, `accepted`, `declined`.
+
+**Solution**: Clear `default_state` from context before modifying `partner_ids`:
+```python
+def _add_attendees(self):
+    for record in self.with_context(default_state=False):
+        # ... add partners to partner_ids
+```
