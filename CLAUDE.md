@@ -146,17 +146,6 @@ odoodev test my_module           # Run module tests
 - **Requires `odoodev update <name>`**: Python model changes (new fields, method changes), security CSV, data XML files
 - **Requires `odoodev reset-db`**: Removing fields/models, major structural changes
 
-### Odoo Development Knowledge
-
-**IMPORTANT: Always consult the `/odoo-19.0` skill plugin BEFORE starting any technical implementation** — especially for OWL components, controller routes, view XML, security rules, and any Odoo API usage. Odoo 19 has breaking changes from prior versions (renamed fields, deprecated APIs, removed features) that the plugin's 18 specialized guides cover: Actions, Controllers, Data files, API Decorators, SQL Constraints, Database Indexes, Module development, Field types, Manifest configuration, Mixins, ORM methods, Migration scripts, OWL components, Performance optimization, QWeb Reports, Security/ACL, Testing, and Translations.
-
-Key Odoo 19 gotchas caught by the plugin:
-- `groups_id` → `group_ids` on `res.users`
-- `read_group()` → `_read_group()` with new signature
-- `mobile` field removed from `res.partner`
-- `<group>` tag not allowed in search views
-- OWL `mount()` lacks template registry in portal/frontend — use vanilla JS instead
-
 ## MCP Tools
 
 Five MCP servers are configured in `.mcp.json` (gitignored — copy from `.mcp.json.example`):
@@ -180,9 +169,3 @@ Each addon module under development maintains a `docs/devlog-faseN.md` file per 
 
 When starting work on a module phase, check existing devlogs for context. When finishing, update the devlog with decisions and outcomes.
 
-## ERRORS.md Workflow
-
-When you encounter a new error:
-1. Check `ERRORS.md` for an existing solution.
-2. If not found, solve it, then add a new `ERR-NNN` entry with symptom, cause, and solution.
-3. Commit `ERRORS.md` so the fix is available in future sessions.
