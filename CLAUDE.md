@@ -117,7 +117,7 @@ pyproject.toml                  # CLI packaging + ruff/pylint tool config
 |---|---|---|
 | `PROJECT_NAME` | `my-odoo-project` | Project identifier |
 | `COMPOSE_PROJECT_NAME` | `my-odoo-project` | Docker container naming prefix |
-| `ODOO_VERSION` | `18.0` | Odoo version |
+| `ODOO_VERSION` | `19.0` | Odoo version |
 | `DEBUGPY` | `False` | Set to `True` to enable debugpy |
 | `DEBUGPY_PORT` | `5678` | Host port for debugpy |
 | `LOAD_LANGUAGE` | `en_US` | Language to auto-install on first run |
@@ -133,7 +133,7 @@ pyproject.toml                  # CLI packaging + ruff/pylint tool config
 
 ## Odoo Module Development
 
-Modules follow standard Odoo 18 structure: `__manifest__.py`, `models/`, `views/`, `security/`, `tests/`. The scaffold template in `templates/module_template/` provides a working starting point with an example model, views, ACLs, and a test case.
+Modules follow standard Odoo structure: `__manifest__.py`, `models/`, `views/`, `security/`, `tests/`. The scaffold template in `templates/module_template/` provides a working starting point with an example model, views, ACLs, and a test case.
 
 ```bash
 odoodev scaffold my_module       # Creates addons/my_module/ from template

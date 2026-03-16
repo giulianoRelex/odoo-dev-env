@@ -1,6 +1,6 @@
 {
     "name": "__module_name__",
-    "version": "18.0.1.0.0",
+    "version": "19.0.1.0.0",
     "category": "Uncategorized",
     "summary": "Short summary of __module_name__",
     "author": "Your Company",

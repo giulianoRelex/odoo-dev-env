@@ -29,7 +29,7 @@ class OdooDevApp(App):
     def compose(self) -> ComposeResult:
         env = load_env()
         project = env.get("PROJECT_NAME", "odoo-project")
-        version = env.get("ODOO_VERSION", "18.0")
+        version = env.get("ODOO_VERSION", "19.0")
 
         yield Header()
         yield Horizontal(

@@ -26,8 +26,8 @@ def init() -> None:
 
     odoo_version = questionary.select(
         "Odoo version:",
-        choices=["18.0", "17.0", "16.0"],
-        default="18.0",
+        choices=["19.0", "18.0", "17.0"],
+        default="19.0",
     ).ask()
 
     web_port = questionary.text("Odoo web port:", default="8069").ask()
@@ -66,7 +66,7 @@ def init() -> None:
         "DB_NAME": db_name,
         "DB_USER": db_user,
         "DB_PASSWORD": db_password,
-        "DB_IMAGE_TAG": "15",
+        "DB_IMAGE_TAG": "16",
         "DB_PORT": "5432",
         "LOAD_LANGUAGE": language,
         "WITHOUT_DEMO": without_demo,
