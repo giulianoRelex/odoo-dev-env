@@ -4,11 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Generic, reusable Dockerized Odoo development environment boilerplate. Requires Python 3.10+ and Docker Compose v2. Three services run via Docker Compose: Odoo web (`web`), PostgreSQL (`db`), and pgweb (`pgweb` — a DB browser UI). Services have health checks: `db` uses `pg_isready`, `web` hits `/web/health`.
+Generic, reusable Dockerized Odoo development environment boilerplate. Requires Python 3.10+ and Docker Compose v2. Three services run via Docker Compose: Odoo web (`web`), PostgreSQL with pgvector (`db`), and pgweb (`pgweb` — a DB browser UI). Services have health checks: `db` uses `pg_isready`, `web` hits `/web/health`.
 
 Custom modules go in `addons/` (mounted at `/mnt/extra-addons`). Enterprise modules go in `enterprise/` (mounted at `/mnt/enterprise-addons`). Both directories are gitignored and created at runtime.
 
 The project is managed via the `odoodev` Python CLI (installed from `pyproject.toml`). Odoo runs in dev mode (`--dev=reload,xml`) for hot-reload.
+
+Default stack: **Odoo 19** + **PostgreSQL 16 (pgvector)**.
 
 ## Essential Commands
 
@@ -85,6 +87,7 @@ entrypoint.sh                   # Container entrypoint: debugpy, language loadin
 config/                         # Runtime config (odoo.conf generated here)
 .env / .env.example             # Environment variables (ports, DB creds, language, debug)
 templates/module_template/      # Boilerplate for scaffolding new Odoo modules
+skills/odoo-19.0/               # Odoo 19 development knowledge base (18 reference guides)
 addons/                         # Custom modules (gitignored, mounted into container)
 enterprise/                     # Enterprise modules (gitignored, mounted into container)
 snapshots/                      # Database snapshots (gitignored)
@@ -110,6 +113,7 @@ pyproject.toml                  # CLI packaging + ruff/pylint tool config
 - **Log duplication**: Odoo output is tee'd to `/var/log/odoo/odoo.log` (mapped to `logs/` on the host) in addition to stdout.
 - **Debugpy**: When `DEBUGPY=True`, the entrypoint installs debugpy and launches Odoo under `python -m debugpy --listen 0.0.0.0:5678`. Attach VS Code's debugger to `localhost:${DEBUGPY_PORT}`.
 - **DB operations**: `db restore` and `load-backup` stop the web service during the operation, then restart it. Snapshots use pg custom format (`--format=custom`), restores skip ownership (`--no-owner --no-acl`).
+- **Backup loading**: `load-backup` accepts Odoo.sh or Database Manager `.zip` backups containing `dump.sql` (or `dump.dump` custom format) and an optional `filestore/` directory. It drops the current DB, restores the dump, copies the filestore into the Odoo data volume, and optionally neutralizes the DB (disabling crons, mail servers, etc.).
 
 ### Key Environment Variables (.env)
 
@@ -118,12 +122,19 @@ pyproject.toml                  # CLI packaging + ruff/pylint tool config
 | `PROJECT_NAME` | `my-odoo-project` | Project identifier |
 | `COMPOSE_PROJECT_NAME` | `my-odoo-project` | Docker container naming prefix |
 | `ODOO_VERSION` | `19.0` | Odoo version |
+| `ODOO_IMAGE` | `odoo:19` | Docker image for Odoo |
+| `DB_IMAGE` | `pgvector/pgvector:pg16` | Docker image for PostgreSQL (with pgvector) |
 | `DEBUGPY` | `False` | Set to `True` to enable debugpy |
 | `DEBUGPY_PORT` | `5678` | Host port for debugpy |
 | `LOAD_LANGUAGE` | `en_US` | Language to auto-install on first run |
 | `INIT_MODULES` | (empty) | Comma-separated modules to install at startup |
+| `WITHOUT_DEMO` | `all` | Skip demo data (`all` to skip all) |
 | `WEB_PORT` | `8069` | Host port for Odoo web |
 | `PGWEB_PORT` | `8081` | Host port for pgweb DB browser |
+| `DB_NAME` | `odoo_db` | PostgreSQL database name |
+| `DB_USER` | `odoo` | PostgreSQL user |
+| `DB_PASSWORD` | `odoo` | PostgreSQL password |
+| `ADMIN_PASSWORD` | `admin` | Odoo master admin password |
 
 ### Container Access Points
 
@@ -137,7 +148,8 @@ Modules follow standard Odoo structure: `__manifest__.py`, `models/`, `views/`, 
 
 ```bash
 odoodev scaffold my_module       # Creates addons/my_module/ from template
-odoodev update my_module         # Apply Python/data changes
+odoodev addon-install my_module  # Install the module for the first time
+odoodev update my_module         # Apply Python/data changes after edits
 odoodev test my_module           # Run module tests
 ```
 
@@ -145,6 +157,43 @@ odoodev test my_module           # Run module tests
 - **Automatic** (dev mode): XML view changes, QWeb templates, JS/CSS assets
 - **Requires `odoodev update <name>`**: Python model changes (new fields, method changes), security CSV, data XML files
 - **Requires `odoodev reset-db`**: Removing fields/models, major structural changes
+
+### Odoo 19 Development Knowledge
+
+The `skills/odoo-19.0/` directory contains 18 specialized reference guides for Odoo 19 development. Consult these before implementing Odoo-specific code.
+
+| Topic | Guide | When to Use |
+|---|---|---|
+| Actions | `skills/odoo-19.0/references/odoo-19-actions-guide.md` | Actions, menus, cron jobs, server actions |
+| API Decorators | `skills/odoo-19.0/references/odoo-19-decorator-guide.md` | @api decorators, compute fields, validation |
+| Controllers | `skills/odoo-19.0/references/odoo-19-controller-guide.md` | HTTP endpoints, routes, web controllers |
+| Data Files | `skills/odoo-19.0/references/odoo-19-data-guide.md` | XML/CSV data files, records, shortcuts |
+| Development | `skills/odoo-19.0/references/odoo-19-development-guide.md` | Module creation, manifest, wizards, reports |
+| Field Types | `skills/odoo-19.0/references/odoo-19-field-guide.md` | Model field types and parameters |
+| Manifest | `skills/odoo-19.0/references/odoo-19-manifest-guide.md` | `__manifest__.py` configuration |
+| Migration | `skills/odoo-19.0/references/odoo-19-migration-guide.md` | Migration scripts, pre/post/end hooks |
+| Mixins | `skills/odoo-19.0/references/odoo-19-mixins-guide.md` | mail.thread, activities, email aliases |
+| Model Methods | `skills/odoo-19.0/references/odoo-19-model-guide.md` | ORM, CRUD, search, domain filters |
+| OWL Components | `skills/odoo-19.0/references/odoo-19-owl-guide.md` | OWL UI components, hooks, services |
+| Performance | `skills/odoo-19.0/references/odoo-19-performance-guide.md` | Query optimization, N+1 prevention |
+| Reports | `skills/odoo-19.0/references/odoo-19-reports-guide.md` | QWeb reports, PDF/HTML, paper formats |
+| Security | `skills/odoo-19.0/references/odoo-19-security-guide.md` | ACL, record rules, field permissions |
+| Testing | `skills/odoo-19.0/references/odoo-19-testing-guide.md` | TransactionCase, HttpCase, mocking |
+| Transactions | `skills/odoo-19.0/references/odoo-19-transaction-guide.md` | Savepoints, UniqueViolation, errors |
+| Translation | `skills/odoo-19.0/references/odoo-19-translation-guide.md` | i18n, PO files, translatable fields |
+| Views & XML | `skills/odoo-19.0/references/odoo-19-view-guide.md` | XML views, kanban, xpath, QWeb templates |
+
+**Key Odoo 19 changes from prior versions:**
+- `<tree>` tag replaced by `<list>`
+- `attrs` removed — use `invisible=`, `readonly=`, `required=` directly
+- `@api.ondelete` for delete validation instead of overriding `unlink()`
+- `_sql_constraints` replaced by `models.Constraint(...)`
+- `read_group()` replaced by `_read_group()`
+- `t-esc` deprecated in favor of `t-out`
+- `category_id` on `res.groups` replaced by `privilege_id`
+- `@api.private` decorator for non-RPC methods
+- CamelCase class names auto-derive `_name`
+- Kanban templates use `t-name="card"` instead of `t-name="kanban-box"`
 
 ## MCP Tools
 
@@ -168,4 +217,3 @@ Each addon module under development maintains a `docs/devlog-faseN.md` file per 
 - Files created/modified in the phase
 
 When starting work on a module phase, check existing devlogs for context. When finishing, update the devlog with decisions and outcomes.
-
