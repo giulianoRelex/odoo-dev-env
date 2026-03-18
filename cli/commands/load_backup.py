@@ -166,8 +166,26 @@ def load_backup(
         )
         success("Database neutralized.")
 
+    # ── Reset admin credentials ────────────────────────────────────
+    info("Resetting admin credentials (admin/admin)...")
+    hash_result = dc.exec_cmd(
+        "web",
+        [
+            "python3", "-c",
+            "from passlib.context import CryptContext; "
+            "print(CryptContext(['pbkdf2_sha512']).hash('admin'))",
+        ],
+    )
+    pw_hash = hash_result.stdout.decode().strip()
+    dc.exec_cmd(
+        "db",
+        ["psql", "-U", db_user, "-d", db_name, "-c",
+         f"UPDATE res_users SET login = 'admin', password = '{pw_hash}' WHERE id = 2;"],
+    )
+    success("Admin credentials reset: login=admin, password=admin")
+
     # ── Restart everything ─────────────────────────────────────────
-    info("Starting services...")
-    dc._run(["start", "web", "pgweb"])
+    info("Restarting services...")
+    dc._run(["restart", "web", "pgweb"])
 
     success(f"Backup loaded into '{db_name}'. Access at http://localhost:{env.get('WEB_PORT', '8069')}")
