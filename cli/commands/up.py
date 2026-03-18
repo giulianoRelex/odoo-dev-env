@@ -1,9 +1,21 @@
+import os
+import stat
+
 import typer
 
 from cli.core.config import generate_odoo_conf, load_env
 from cli.core.console import error, info, success
 from cli.core.docker import dc
-from cli.core.paths import CONFIG_DIR, ENV_FILE
+from cli.core.paths import CONFIG_DIR, ENV_FILE, LOGS_DIR
+
+
+def _ensure_logs_dir() -> None:
+    """Ensure the logs directory exists and is writable by container processes."""
+    LOGS_DIR.mkdir(exist_ok=True)
+    current = LOGS_DIR.stat().st_mode
+    desired = current | stat.S_IWOTH | stat.S_IXOTH  # o+wx
+    if current != desired:
+        os.chmod(LOGS_DIR, desired)
 
 
 def up(
@@ -23,6 +35,7 @@ def up(
         generate_odoo_conf(env)
         info("Regenerated config/odoo.conf from .env")
 
+    _ensure_logs_dir()
     info("Starting environment...")
     dc.up(build=build, watch=watch)
 
